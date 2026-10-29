@@ -1,0 +1,13 @@
+<div class="flex items-center gap-2">
+  <button id="exportBtn" title="Экспорт заметок в JSON" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition text-slate-300">
+    ↓ Бэкап
+  </button>
+  <label for="importInput" title="Восстановить из JSON" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition text-slate-300 cursor-pointer">
+    ↑ Импорт
+    <input type="file" id="importInput" accept=".json" class="hidden" />
+  </label>
+  <button id="notifyBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition flex items-center gap-1.5 text-slate-300">
+    <span id="notifyDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+    <span id="notifyStatus">Пуши выкл</span>
+  </button>
+</div>
