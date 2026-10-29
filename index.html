@@ -1,13 +1,621 @@
-<div class="flex items-center gap-2">
-  <button id="exportBtn" title="Экспорт заметок в JSON" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition text-slate-300">
-    ↓ Бэкап
-  </button>
-  <label for="importInput" title="Восстановить из JSON" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition text-slate-300 cursor-pointer">
-    ↑ Импорт
-    <input type="file" id="importInput" accept=".json" class="hidden" />
-  </label>
-  <button id="notifyBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition flex items-center gap-1.5 text-slate-300">
-    <span id="notifyDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
-    <span id="notifyStatus">Пуши выкл</span>
-  </button>
-</div>
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Active Brain // Persistent Second Brain</title>
+  <meta name="theme-color" content="#070a12" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bgDark: '#070a12',
+            surfaceDark: '#0f172a',
+            surfaceBorder: '#1e293b',
+            neonCyan: '#06b6d4',
+            neonPink: '#f43f5e',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070a12;
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+      min-height: 100vh;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 pb-24 max-w-4xl mx-auto selection:bg-neonCyan selection:text-black">
+
+  <!-- HEADER -->
+  <header class="flex flex-wrap justify-between items-center gap-3 mb-6">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-neonCyan shadow-[0_0_8px_#06b6d4]"></span>
+        <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-neonCyan via-indigo-200 to-neonPink">
+          ACTIVE BRAIN
+        </h1>
+      </div>
+      <p class="text-xs text-slate-400 mt-0.5">Второй мозг с неотвратимыми напоминаниями</p>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button id="exportBtn" title="Скачать копию" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition text-slate-300">
+        ↓ Бэкап
+      </button>
+      <label for="importInput" title="Загрузить копию" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition text-slate-300 cursor-pointer">
+        ↑ Импорт
+        <input type="file" id="importInput" accept=".json" class="hidden" />
+      </label>
+      <button id="notifyBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surfaceDark border border-surfaceBorder hover:border-neonCyan transition flex items-center gap-1.5 text-slate-300">
+        <span id="notifyDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span id="notifyStatus">Пуши выкл</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- QUICK CAPTURE CARD -->
+  <section class="glass-panel rounded-2xl p-4 sm:p-6 mb-6 shadow-2xl relative overflow-hidden">
+    <div class="flex flex-col gap-3">
+      <div class="relative">
+        <textarea 
+          id="thoughtInput" 
+          rows="3" 
+          placeholder="«Позвонить Тимуру завтра в 15:00 по поводу сайта #клиенты» или скажи голосом..." 
+          class="w-full bg-slate-900/90 text-slate-100 placeholder-slate-500 rounded-xl p-3.5 pr-14 text-sm sm:text-base border border-surfaceBorder focus:border-neonCyan focus:ring-1 focus:ring-neonCyan outline-none transition resize-none shadow-inner"
+        ></textarea>
+        
+        <button 
+          id="micBtn" 
+          title="Голосовой ввод"
+          class="absolute right-3 top-3 w-10 h-10 rounded-full flex items-center justify-center bg-slate-800 text-neonCyan border border-cyan-500/30 hover:scale-105 active:scale-95 transition"
+        >
+          <svg id="micIcon" class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Preview -->
+      <div id="parsePreview" class="hidden text-xs py-1.5 px-3 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-300 flex flex-wrap gap-2 items-center">
+        <span class="text-slate-500 font-mono">Анализ:</span>
+        <span id="previewType" class="px-1.5 py-0.5 rounded bg-cyan-950 text-neonCyan font-bold">Задача</span>
+        <span id="previewDate" class="text-amber-400 font-medium"></span>
+        <span id="previewTags" class="text-pink-400 font-mono"></span>
+      </div>
+
+      <div class="flex items-center justify-between pt-1">
+        <span class="text-[11px] text-slate-500 hidden sm:inline">Ctrl + Enter для быстрой отправки</span>
+        <button 
+          id="saveBtn" 
+          class="w-full sm:w-auto ml-auto px-6 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-neonCyan to-cyan-600 hover:from-cyan-400 hover:to-neonCyan text-slate-950 shadow-lg shadow-cyan-500/20 active:scale-95 transition flex items-center justify-center gap-2"
+        >
+          <span>Зафиксировать</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <div class="flex border-b border-surfaceBorder gap-4 mb-5">
+    <button id="tabUrgent" class="pb-3 font-bold text-sm tracking-wide border-b-2 border-neonPink text-neonPink flex items-center gap-2 transition">
+      <span>🔥 Сегодня & Дедлайны</span>
+      <span id="urgentBadge" class="bg-pink-950 text-neonPink px-2 py-0.2 rounded-full text-xs border border-pink-700/50">0</span>
+    </button>
+    <button id="tabAll" class="pb-3 font-medium text-sm tracking-wide border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+      <span>💡 Мысли & Идеи</span>
+      <span id="allBadge" class="bg-slate-800 text-slate-300 px-2 py-0.2 rounded-full text-xs">0</span>
+    </button>
+  </div>
+
+  <!-- SEARCH & TAGS -->
+  <div id="filterControls" class="hidden mb-4 space-y-2">
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="Быстрый поиск по мыслям и задачам..." 
+      class="w-full bg-slate-900/80 border border-surfaceBorder rounded-xl p-2.5 text-xs sm:text-sm text-slate-200 outline-none focus:border-neonCyan transition"
+    />
+    <div id="tagsList" class="flex flex-wrap gap-1.5 pt-1"></div>
+  </div>
+
+  <!-- MAIN LIST -->
+  <main>
+    <div id="urgentContainer" class="space-y-3"></div>
+    <div id="ideasContainer" class="hidden space-y-3"></div>
+    <div id="emptyState" class="hidden py-16 text-center text-slate-500">
+      <div class="text-4xl mb-2">⚡</div>
+      <p class="text-sm font-medium">Здесь пока ничего нет</p>
+    </div>
+  </main>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    (function () {
+      'use strict';
+
+      const STORAGE_KEY = 'active_brain_notes_v1';
+      let notes = [];
+      let currentTab = 'urgent';
+      let activeTagFilter = null;
+      let recognition = null;
+      let isRecording = false;
+
+      // DOM
+      const thoughtInput = document.getElementById('thoughtInput');
+      const micBtn = document.getElementById('micBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      const tabUrgent = document.getElementById('tabUrgent');
+      const tabAll = document.getElementById('tabAll');
+      const urgentBadge = document.getElementById('urgentBadge');
+      const allBadge = document.getElementById('allBadge');
+      const urgentContainer = document.getElementById('urgentContainer');
+      const ideasContainer = document.getElementById('ideasContainer');
+      const emptyState = document.getElementById('emptyState');
+      const notifyBtn = document.getElementById('notifyBtn');
+      const notifyDot = document.getElementById('notifyDot');
+      const notifyStatus = document.getElementById('notifyStatus');
+      const parsePreview = document.getElementById('parsePreview');
+      const previewType = document.getElementById('previewType');
+      const previewDate = document.getElementById('previewDate');
+      const previewTags = document.getElementById('previewTags');
+      const filterControls = document.getElementById('filterControls');
+      const searchInput = document.getElementById('searchInput');
+      const tagsList = document.getElementById('tagsList');
+      const exportBtn = document.getElementById('exportBtn');
+      const importInput = document.getElementById('importInput');
+
+      function loadNotes() {
+        try {
+          const data = localStorage.getItem(STORAGE_KEY);
+          notes = data ? JSON.parse(data) : [];
+        } catch (e) {
+          notes = [];
+        }
+
+        if (!notes || notes.length === 0) {
+          notes = [
+            {
+              id: 'ab_init_1',
+              rawText: 'Позвонить Тимуру завтра в 15:00 по поводу сайта #клиенты',
+              title: 'Позвонить Тимуру по поводу сайта',
+              type: 'task',
+              dueAt: new Date(Date.now() + 86400000).toISOString(),
+              tags: ['#клиенты'],
+              status: 'pending',
+              nagCount: 0,
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: 'ab_init_2',
+              rawText: 'Идея: Автоматизация монтажа видео через Python и FFmpeg #стартап',
+              title: 'Автоматизация монтажа видео',
+              type: 'idea',
+              dueAt: null,
+              tags: ['#стартап'],
+              status: 'pending',
+              nagCount: 0,
+              createdAt: new Date().toISOString()
+            }
+          ];
+          saveNotes();
+        }
+      }
+
+      function saveNotes() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+        render();
+      }
+
+      function parseContent(rawText) {
+        const text = rawText.trim();
+        if (!text) return null;
+
+        let detectedType = 'note';
+        let dueAt = null;
+        let tags = [];
+
+        const hashtagMatches = text.match(/#[\p{L}0-9_-]+/gu);
+        if (hashtagMatches) {
+          tags = hashtagMatches.map(t => t.toLowerCase());
+        }
+
+        const lower = text.toLowerCase();
+        if (/(сайт|макет|клиент|заказчик|тимур)/.test(lower) && !tags.includes('#клиенты')) tags.push('#клиенты');
+        if (/(деньги|оплат|счет|долг|карта|сум)/.test(lower) && !tags.includes('#деньги')) tags.push('#деньги');
+
+        const now = new Date();
+        let targetDate = new Date(now.getTime());
+        let hasTime = false;
+
+        if (/послезавтра/i.test(lower)) {
+          targetDate.setDate(targetDate.getDate() + 2);
+          hasTime = true;
+        } else if (/завтра/i.test(lower)) {
+          targetDate.setDate(targetDate.getDate() + 1);
+          hasTime = true;
+        } else if (/сегодня/i.test(lower)) {
+          hasTime = true;
+        }
+
+        const inMinutesMatch = lower.match(/через\s+(\d+)\s+мин/i);
+        const inHoursMatch = lower.match(/через\s+(\d+)\s+час/i);
+        if (inMinutesMatch) {
+          targetDate = new Date(now.getTime() + parseInt(inMinutesMatch[1], 10) * 60000);
+          hasTime = true;
+        } else if (inHoursMatch) {
+          targetDate = new Date(now.getTime() + parseInt(inHoursMatch[1], 10) * 3600000);
+          hasTime = true;
+        }
+
+        const timeMatch = lower.match(/(?:в|к)\s+(\d{1,2})(?::(\d{2}))?/i);
+        if (timeMatch) {
+          const hours = parseInt(timeMatch[1], 10);
+          const minutes = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+          if (hours >= 0 && hours < 24) {
+            targetDate.setHours(hours, minutes, 0, 0);
+            if (!/завтра|послезавтра/i.test(lower) && targetDate.getTime() < now.getTime()) {
+              targetDate.setDate(targetDate.getDate() + 1);
+            }
+            hasTime = true;
+          }
+        }
+
+        if (hasTime) {
+          dueAt = targetDate.toISOString();
+        }
+
+        const taskKeywords = /(напомни|позвонить|написать|сделать|отправить|купить|скинуть|встреча|дедлайн)/i;
+        const ideaKeywords = /(идея|стартап|концепт|проект|мысль|придумал)/i;
+
+        if (dueAt || taskKeywords.test(lower)) {
+          detectedType = 'task';
+        } else if (ideaKeywords.test(lower)) {
+          detectedType = 'idea';
+        }
+
+        let title = text.replace(/#[\p{L}0-9_-]+/gu, '').trim();
+        if (title.length > 70) title = title.substring(0, 70) + '...';
+
+        return {
+          id: 'ab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          rawText: text,
+          title: title || 'Без названия',
+          type: detectedType,
+          dueAt: dueAt,
+          tags: tags,
+          status: 'pending',
+          nagCount: 0,
+          createdAt: now.toISOString()
+        };
+      }
+
+      function playSound() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(650, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(950, ctx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.5);
+        } catch (e) {}
+      }
+
+      function checkAlarms() {
+        const now = Date.now();
+        notes.forEach(note => {
+          if (note.type === 'task' && note.status === 'pending' && note.dueAt) {
+            const dueTime = new Date(note.dueAt).getTime();
+            if (now >= dueTime) {
+              const lastNag = note.lastNagAt ? new Date(note.lastNagAt).getTime() : 0;
+              if (!note.lastNagAt || (now - lastNag >= 300000)) {
+                note.lastNagAt = new Date().toISOString();
+                note.nagCount = (note.nagCount || 0) + 1;
+                playSound();
+                if (Notification.permission === 'granted') {
+                  new Notification(`🚨 ДЕДЛАЙН: ${note.title}`, {
+                    body: 'Задача ждет выполнения в Active Brain!',
+                    tag: note.id
+                  });
+                }
+                saveNotes();
+              }
+            }
+          }
+        });
+      }
+
+      function initSpeech() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          micBtn.style.opacity = '0.4';
+          micBtn.title = 'Голосовой ввод недоступен в этом браузере';
+          return;
+        }
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ru-RU';
+        recognition.interimResults = true;
+        recognition.onstart = () => {
+          isRecording = true;
+          micBtn.classList.add('bg-neonPink', 'text-white');
+        };
+        recognition.onresult = (e) => {
+          let str = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            str += e.results[i][0].transcript;
+          }
+          thoughtInput.value = str;
+          updatePreview();
+        };
+        recognition.onerror = () => stopSpeech();
+        recognition.onend = () => stopSpeech();
+      }
+
+      function stopSpeech() {
+        isRecording = false;
+        micBtn.classList.remove('bg-neonPink', 'text-white');
+      }
+
+      function formatCountdown(dueIso) {
+        const diff = new Date(dueIso).getTime() - Date.now();
+        if (diff <= 0) {
+          const over = Math.floor(Math.abs(diff) / 60000);
+          return `<span class="text-neonPink font-bold">ПРОСРОЧЕНО (${over}м)</span>`;
+        }
+        const hours = Math.floor(diff / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        if (hours > 24) return `<span class="text-amber-400">через ${Math.floor(hours/24)} дн.</span>`;
+        return `<span class="text-neonCyan font-mono">${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}</span>`;
+      }
+
+      function escapeHtml(str) {
+        return str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]||t));
+      }
+
+      function renderCard(note) {
+        const card = document.createElement('div');
+        const isOverdue = note.dueAt && new Date(note.dueAt).getTime() <= Date.now() && note.status === 'pending';
+        card.className = `glass-panel rounded-xl p-4 transition border ${
+          isOverdue ? 'border-neonPink shadow-[0_0_15px_rgba(244,63,94,0.25)]' : 'border-surfaceBorder hover:border-slate-700'
+        }`;
+
+        const tagsHtml = (note.tags || []).map(t => 
+          `<span class="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 border border-slate-700 text-slate-300 font-mono">${t}</span>`
+        ).join('');
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                  note.type === 'task' ? 'bg-cyan-950 text-neonCyan border border-cyan-800/50' : 'bg-pink-950 text-neonPink border border-pink-800/50'
+                }">${note.type}</span>
+                ${note.dueAt && note.status === 'pending' ? `<span class="text-xs" data-due="${note.dueAt}">${formatCountdown(note.dueAt)}</span>` : ''}
+                ${note.nagCount > 0 && note.status === 'pending' ? `<span class="text-[10px] bg-red-950 text-neonPink px-1.5 py-0.2 rounded">Сигналов: ${note.nagCount}</span>` : ''}
+              </div>
+              <p class="text-sm sm:text-base font-medium text-slate-100 ${note.status === 'done' ? 'line-through text-slate-500' : ''}">${escapeHtml(note.rawText)}</p>
+              <div class="flex flex-wrap gap-1 mt-2.5 items-center">
+                ${tagsHtml}
+                <span class="text-[10px] text-slate-600 font-mono ml-auto">${new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              ${note.type === 'task' ? `
+                <button data-action="toggle" data-id="${note.id}" class="w-8 h-8 rounded-lg flex items-center justify-center transition ${
+                  note.status === 'done' ? 'bg-emerald-950 text-emerald-400 border border-emerald-700' : 'bg-slate-800 text-slate-400 hover:text-emerald-400 border border-slate-700'
+                }">✓</button>
+              ` : ''}
+              <button data-action="delete" data-id="${note.id}" class="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-500 hover:text-neonPink border border-slate-700 transition">✕</button>
+            </div>
+          </div>
+        `;
+        return card;
+      }
+
+      function render() {
+        const pending = notes.filter(n => n.type === 'task' && n.status === 'pending');
+        urgentBadge.textContent = pending.length;
+        allBadge.textContent = notes.length;
+
+        urgentContainer.innerHTML = '';
+        const sortedUrgent = [...pending].sort((a,b) => (a.dueAt ? new Date(a.dueAt) : Infinity) - (b.dueAt ? new Date(b.dueAt) : Infinity));
+        sortedUrgent.forEach(n => urgentContainer.appendChild(renderCard(n)));
+
+        ideasContainer.innerHTML = '';
+        const q = (searchInput.value || '').toLowerCase();
+        const filteredAll = notes.filter(n => {
+          const matchQ = n.rawText.toLowerCase().includes(q);
+          const matchT = activeTagFilter ? (n.tags || []).includes(activeTagFilter) : true;
+          return matchQ && matchT;
+        });
+        filteredAll.forEach(n => ideasContainer.appendChild(renderCard(n)));
+
+        if (currentTab === 'urgent') {
+          emptyState.classList.toggle('hidden', sortedUrgent.length > 0);
+        } else {
+          emptyState.classList.toggle('hidden', filteredAll.length > 0);
+        }
+
+        renderTags();
+      }
+
+      function renderTags() {
+        const allTags = [...new Set(notes.flatMap(n => n.tags || []))];
+        tagsList.innerHTML = '';
+        if (!allTags.length) return;
+
+        const allBtn = document.createElement('button');
+        allBtn.className = `px-2 py-0.5 rounded-full text-xs font-mono transition ${!activeTagFilter ? 'bg-neonCyan text-black font-bold' : 'bg-slate-800 text-slate-400'}`;
+        allBtn.textContent = '#все';
+        allBtn.onclick = () => { activeTagFilter = null; render(); };
+        tagsList.appendChild(allBtn);
+
+        allTags.forEach(tag => {
+          const btn = document.createElement('button');
+          btn.className = `px-2 py-0.5 rounded-full text-xs font-mono transition ${activeTagFilter === tag ? 'bg-neonCyan text-black font-bold' : 'bg-slate-800 text-slate-400'}`;
+          btn.textContent = tag;
+          btn.onclick = () => {
+            activeTagFilter = (activeTagFilter === tag) ? null : tag;
+            render();
+          };
+          tagsList.appendChild(btn);
+        });
+      }
+
+      function updatePreview() {
+        const parsed = parseContent(thoughtInput.value);
+        if (!parsed) {
+          parsePreview.classList.add('hidden');
+          return;
+        }
+        parsePreview.classList.remove('hidden');
+        previewType.textContent = parsed.type === 'task' ? '⚡ Задача' : '💡 Идея';
+        if (parsed.dueAt) {
+          previewDate.textContent = `⏰ ${new Date(parsed.dueAt).toLocaleString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`;
+        } else {
+          previewDate.textContent = '';
+        }
+        previewTags.textContent = (parsed.tags || []).join(' ');
+      }
+
+      function handleSave() {
+        const parsed = parseContent(thoughtInput.value);
+        if (!parsed) return;
+        notes.unshift(parsed);
+        saveNotes();
+        thoughtInput.value = '';
+        parsePreview.classList.add('hidden');
+        if (parsed.type === 'task') switchTab('urgent');
+      }
+
+      function switchTab(tab) {
+        currentTab = tab;
+        if (tab === 'urgent') {
+          tabUrgent.classList.add('border-neonPink', 'text-neonPink');
+          tabUrgent.classList.remove('border-transparent', 'text-slate-400');
+          tabAll.classList.remove('border-neonCyan', 'text-neonCyan');
+          tabAll.classList.add('border-transparent', 'text-slate-400');
+          urgentContainer.classList.remove('hidden');
+          ideasContainer.classList.add('hidden');
+          filterControls.classList.add('hidden');
+        } else {
+          tabAll.classList.add('border-neonCyan', 'text-neonCyan');
+          tabAll.classList.remove('border-transparent', 'text-slate-400');
+          tabUrgent.classList.remove('border-neonPink', 'text-neonPink');
+          tabUrgent.classList.add('border-transparent', 'text-slate-400');
+          urgentContainer.classList.add('hidden');
+          ideasContainer.classList.remove('hidden');
+          filterControls.classList.remove('hidden');
+        }
+        render();
+      }
+
+      // Слушатели событий
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.dataset.action === 'delete') {
+          notes = notes.filter(n => n.id !== btn.dataset.id);
+          saveNotes();
+        } else if (btn.dataset.action === 'toggle') {
+          const item = notes.find(n => n.id === btn.dataset.id);
+          if (item) {
+            item.status = item.status === 'done' ? 'pending' : 'done';
+            saveNotes();
+          }
+        }
+      });
+
+      saveBtn.addEventListener('click', handleSave);
+      thoughtInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleSave();
+        }
+      });
+      thoughtInput.addEventListener('input', updatePreview);
+
+      micBtn.addEventListener('click', () => {
+        if (!recognition) return;
+        isRecording ? recognition.stop() : recognition.start();
+      });
+
+      tabUrgent.addEventListener('click', () => switchTab('urgent'));
+      tabAll.addEventListener('click', () => switchTab('all'));
+      searchInput.addEventListener('input', render);
+
+      notifyBtn.addEventListener('click', async () => {
+        if (!('Notification' in window)) return;
+        const p = await Notification.requestPermission();
+        if (p === 'granted') {
+          notifyDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+          notifyStatus.textContent = 'Оповещения вкл';
+          new Notification('Active Brain', { body: 'Уведомления успешно подключены!' });
+        }
+      });
+
+      exportBtn.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `active_brain_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+      });
+
+      importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            if (Array.isArray(parsed)) {
+              notes = parsed;
+              saveNotes();
+            }
+          } catch(err) {
+            alert('Неверный формат JSON');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      loadNotes();
+      initSpeech();
+      render();
+
+      setInterval(() => {
+        checkAlarms();
+        document.querySelectorAll('[data-due]').forEach(el => {
+          el.innerHTML = formatCountdown(el.dataset.due);
+        });
+      }, 1000);
+    })();
+  </script>
+</body>
+</html>
